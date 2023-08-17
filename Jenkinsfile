@@ -1,34 +1,40 @@
 pipeline {
-    agent any 
-    
-    stages{
-        stage("Clone Code"){
+    agent any
+   
+    environment {
+        DOCKER_HUB_CREDENTIALS_ID = 'docker-hub-credentials'
+    }
+   
+    stages {
+        stage('Checkout') {
             steps {
-                echo "Cloning the code"
-                git url:"https://github.com/LondheShubham153/django-notes-app.git", branch: "main"
+                echo "Cloning"
+                git url: "https://github.com/upadhyay02nitesh/django-notes-app.git", branch: "master"
             }
         }
-        stage("Build"){
+       
+        stage('Build') {
             steps {
-                echo "Building the image"
-                sh "docker build -t my-note-app ."
+                echo "Building the code"
+                sh "docker build -t mynotes-app ."
             }
         }
-        stage("Push to Docker Hub"){
+       
+        stage('Push To Docker Hub') {
             steps {
-                echo "Pushing the image to docker hub"
-                withCredentials([usernamePassword(credentialsId:"dockerHub",passwordVariable:"dockerHubPass",usernameVariable:"dockerHubUser")]){
-                sh "docker tag my-note-app ${env.dockerHubUser}/my-note-app:latest"
-                sh "docker login -u ${env.dockerHubUser} -p ${env.dockerHubPass}"
-                sh "docker push ${env.dockerHubUser}/my-note-app:latest"
+                echo "Push DockerHub"
+                withEnv(["DOCKER_ACCESS_TOKEN=dckr_pat_eW5hzRKCiz74kdddtmBwjAWivco"]) {
+                    sh "docker tag mynotes-app codeshop/mynotes-app:latest"
+                    sh "docker login -u codeshop -p dckr_pat_eW5hzRKCiz74kdddtmBwjAWivco"
+                    sh "docker push codeshop/mynotes-app:latest"
                 }
             }
         }
-        stage("Deploy"){
+       
+        stage('Deploy') {
             steps {
-                echo "Deploying the container"
+                echo "Deploy to the server"
                 sh "docker-compose down && docker-compose up -d"
-                
             }
         }
     }
